@@ -11,13 +11,36 @@ const db = new sqlite3.Database('./data/database.db', (err) => {
     console.error('Could not connect to database', err);
   } else {
     console.log('Connected to the database');
+    // Ensure user table exists with correct schema
+    db.run(`
+      CREATE TABLE IF NOT EXISTS user (
+        username TEXT PRIMARY KEY,
+        password TEXT NOT NULL,
+        registration_time INTEGER NOT NULL,
+        token TEXT NOT NULL,
+        is_banned INTEGER DEFAULT 0,
+        is_admin INTEGER DEFAULT 0,
+        avatar_id TEXT,
+        last_online INTEGER
+      )
+    `, (err) => {
+      if (err) {
+        console.error('Could not ensure user table exists:', err);
+      }
+    });
   }
 });
+
 
 require('dotenv').config()
 const port = process.env.port || 3000
 const version = process.env.version || '1.0.0'
 
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
@@ -34,10 +57,10 @@ function serializeUser(row) {
     password: row.password,
     registrationTime: row.registration_time,
     token: row.token,
-    IsBanned: !!row.is_banned,
-    IsAdmin: !!row.is_admin,
-    AvatarID: row.avatar_id,
-    LastOnline: row.last_online
+    IsBanned: Boolean(row.is_banned),
+    IsAdmin: Boolean(row.is_admin),
+    AvatarID: row.avatar_id === null ? null : row.avatar_id,
+    LastOnline: row.last_online === null ? null : row.last_online
   };
 }
 
@@ -45,6 +68,7 @@ function serializeUser(row) {
 app.get('/api/users', (req, res) => {
   db.all('SELECT username, password, registration_time, token, is_banned, is_admin, avatar_id, last_online FROM user', [], (err, rows) => {
     if (err) {
+      console.error('DB error in /api/users:', err); // log error
       res.status(500).json({ error: 'Database error' });
       return;
     }
@@ -53,7 +77,7 @@ app.get('/api/users', (req, res) => {
   });
 });
 
-app.post('/api/register', bodyParser.json(), (req, res) => {
+app.post('/api/register', (req, res) => {
   const { username, password } = req.body;
 
   // Validate username and password length
@@ -72,6 +96,7 @@ app.post('/api/register', bodyParser.json(), (req, res) => {
   // Check if username already exists
   db.get('SELECT username FROM user WHERE username = ?', [username], (err, row) => {
     if (err) {
+      console.error('DB error in /api/register (select):', err); // log error
       res.status(500).json({ error: 'Database error' });
       return;
     }
@@ -94,6 +119,7 @@ app.post('/api/register', bodyParser.json(), (req, res) => {
       [username, password, registrationTime, token, isBanned, isAdmin, avatarId, lastOnline],
       function (err) {
         if (err) {
+          console.error('DB error in /api/register (insert):', err); // log error
           res.status(500).json({ error: 'Database error' });
           return;
         }
@@ -111,7 +137,7 @@ app.post('/api/register', bodyParser.json(), (req, res) => {
   });
 });
 
-app.post('/api/gettoken', bodyParser.json(), (req, res) => {
+app.post('/api/gettoken', (req, res) => {
   const { username, password } = req.body;
 
   if (
@@ -127,6 +153,7 @@ app.post('/api/gettoken', bodyParser.json(), (req, res) => {
     [username, password],
     (err, row) => {
       if (err) {
+        console.error('DB error in /api/gettoken:', err); // log error
         res.status(500).json({ error: 'Database error' });
         return;
       }
