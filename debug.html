@@ -77,7 +77,8 @@
     <h2>Create DM Chat</h2>
     <form id="newDMChatForm">
       <input name="token" placeholder="User Token" required><br>
-      <input name="isdm" placeholder="Other User ID (number)" required type="number"><br>
+      <input name="isdm" placeholder="Other Username" required><br>
+      <input name="chatname" placeholder="chat name" required><br>
       <button type="submit">Create DM Chat</button>
     </form>
     <div id="newDMChatResult" class="result"></div>
@@ -148,7 +149,8 @@
       const f = e.target;
       const data = {
         token: f.token.value,
-        isdm: Number(f.isdm.value)
+        isdm: Number(f.isdm.value),
+        chatname: f.chatname.value
       };
       document.getElementById('newDMChatResult').textContent = JSON.stringify(await post('/api/newchat', data), null, 2);
     };
