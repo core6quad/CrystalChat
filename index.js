@@ -111,6 +111,34 @@ app.post('/api/register', bodyParser.json(), (req, res) => {
   });
 });
 
+app.post('/api/gettoken', bodyParser.json(), (req, res) => {
+  const { username, password } = req.body;
+
+  if (
+    typeof username !== 'string' ||
+    typeof password !== 'string'
+  ) {
+    res.status(400).json({ error: 'Username and password required' });
+    return;
+  }
+
+  db.get(
+    'SELECT token FROM user WHERE username = ? AND password = ?',
+    [username, password],
+    (err, row) => {
+      if (err) {
+        res.status(500).json({ error: 'Database error' });
+        return;
+      }
+      if (!row) {
+        res.status(401).json({ error: 'Invalid username or password' });
+        return;
+      }
+      res.json({ token: row.token });
+    }
+  );
+});
+
 app.listen(port, () => {
   console.log(`Crystalchat Server listening on port ${port}`)
 });
