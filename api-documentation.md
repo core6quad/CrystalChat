@@ -58,6 +58,28 @@ All endpoints that require authentication expect a `token` either in the `Author
 
 ### Get All Users (Admin Only)
 
-**GET** `/api/users`
+**get** `/api/users`
 
-**Headers:**
+requres IsAdmin === true
+**Body:**
+```json
+{
+  "token": "string"
+}
+```
+**Response:**  
+200 OK, list of users
+
+### Get All chats (Admin Only)
+
+**get** `/api/chats`
+
+requres IsAdmin === true
+**Body:**
+```json
+{
+  "token": "string"
+}
+```
+**Response:**  
+200 OK, list of chats
