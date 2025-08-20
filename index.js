@@ -53,6 +53,64 @@ app.get('/api/users', (req, res) => {
   });
 });
 
+app.post('/api/register', bodyParser.json(), (req, res) => {
+  const { username, password } = req.body;
+
+  // Validate username and password length
+  if (
+    typeof username !== 'string' ||
+    typeof password !== 'string' ||
+    username.length < 3 ||
+    username.length > 16 ||
+    password.length < 6 ||
+    password.length > 24
+  ) {
+    res.status(400).json({ error: 'Invalid username or password length' });
+    return;
+  }
+
+  // Check if username already exists
+  db.get('SELECT username FROM user WHERE username = ?', [username], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: 'Database error' });
+      return;
+    }
+    if (row) {
+      res.status(409).json({ error: 'Username already exists' });
+      return;
+    }
+
+    // Generate random token
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const registrationTime = Date.now();
+    const isAdmin = 0;
+    const isBanned = 0;
+    const avatarId = null;
+    const lastOnline = null;
+
+    db.run(
+      `INSERT INTO user (username, password, registration_time, token, is_banned, is_admin, avatar_id, last_online)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [username, password, registrationTime, token, isBanned, isAdmin, avatarId, lastOnline],
+      function (err) {
+        if (err) {
+          res.status(500).json({ error: 'Database error' });
+          return;
+        }
+        res.status(201).json({
+          username,
+          registrationTime,
+          token,
+          IsBanned: false,
+          IsAdmin: false,
+          AvatarID: null,
+          LastOnline: null
+        });
+      }
+    );
+  });
+});
+
 app.listen(port, () => {
   console.log(`Crystalchat Server listening on port ${port}`)
-})
+});
