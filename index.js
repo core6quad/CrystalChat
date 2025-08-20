@@ -4,14 +4,22 @@ const app = express()
 const ws = require('ws')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+require('dotenv').config()
+const port = process.env.port || 3000
+const version = process.env.version || '1.0.0'
 
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
 
+// parse application/json
+app.use(bodyParser.json())
+
+// Database initialization
 const db = new sqlite3.Database('./data/database.db', (err) => {
   if (err) {
     console.error('Could not connect to database', err);
   } else {
     console.log('Connected to the database');
-    // Ensure user table exists with correct schema
     db.run(`
       CREATE TABLE IF NOT EXISTS user (
         username TEXT PRIMARY KEY,
@@ -31,17 +39,7 @@ const db = new sqlite3.Database('./data/database.db', (err) => {
   }
 });
 
-
-require('dotenv').config()
-const port = process.env.port || 3000
-const version = process.env.version || '1.0.0'
-
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
-
-// parse application/json
-app.use(bodyParser.json())
-
+// Basic routes
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
@@ -50,19 +48,12 @@ app.get('/api/version', (req, res) => {
   res.send(version)
 })
 
-// Serialize user row to object
-function serializeUser(row) {
-  return {
-    username: row.username,
-    password: row.password,
-    registrationTime: row.registration_time,
-    token: row.token,
-    IsBanned: Boolean(row.is_banned),
-    IsAdmin: Boolean(row.is_admin),
-    AvatarID: row.avatar_id === null ? null : row.avatar_id,
-    LastOnline: row.last_online === null ? null : row.last_online
-  };
-}
+// User-related routes
+require('./user')(app, db);
+
+app.listen(port, () => {
+  console.log(`Crystalchat Server listening on port ${port}`)
+});
 
 // Endpoint to get all users serialized
 app.get('/api/users', (req, res) => {
