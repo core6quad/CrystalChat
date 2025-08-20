@@ -166,6 +166,39 @@ app.post('/api/gettoken', (req, res) => {
   );
 });
 
+app.post('/api/whoami', (req, res) => {
+  const { token } = req.body;
+  if (typeof token !== 'string' || !token) {
+    res.status(400).json({ error: 'Token required' });
+    return;
+  }
+  db.get(
+    'SELECT username, registration_time, token, is_banned, is_admin, avatar_id, last_online FROM user WHERE token = ?',
+    [token],
+    (err, row) => {
+      if (err) {
+        console.error('DB error in /api/whoami:', err);
+        res.status(500).json({ error: 'Database error' });
+        return;
+      }
+      if (!row) {
+        res.status(401).json({ error: 'Invalid token' });
+        return;
+      }
+      // Return user info (without password)
+      res.json({
+        username: row.username,
+        registrationTime: row.registration_time,
+        token: row.token,
+        IsBanned: Boolean(row.is_banned),
+        IsAdmin: Boolean(row.is_admin),
+        AvatarID: row.avatar_id === null ? null : row.avatar_id,
+        LastOnline: row.last_online === null ? null : row.last_online
+      });
+    }
+  );
+});
+
 app.listen(port, () => {
   console.log(`Crystalchat Server listening on port ${port}`)
 });
