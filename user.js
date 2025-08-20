@@ -1,4 +1,5 @@
 module.exports = function(app, db) {
+    console.log('User module loaded');
   // Serialize user row to object
   function serializeUser(row) {
     return {
