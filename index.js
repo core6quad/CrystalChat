@@ -69,6 +69,10 @@ app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
+app.get('/ELUA', (req, res) => {
+  res.sendFile(__dirname + '/ELUA.md')
+})
+
 app.get('/api/version', (req, res) => {
   res.send(version)
 })
@@ -76,6 +80,11 @@ app.get('/api/version', (req, res) => {
 // User-related routes
 require('./user')(app, db);
 require('./chat')(app, chatDb, db);
+
+app.get('/debug', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.sendFile(__dirname + '/debug.html');
+});
 
 app.listen(port, () => {
   console.log(`Crystalchat Server listening on port ${port}`)

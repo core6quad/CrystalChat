@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CrystalChat Debug Client</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    input, textarea, select { margin: 0.2em 0; width: 100%; }
+    button { margin: 0.5em 0; }
+    .section { border: 1px solid #ccc; padding: 1em; margin-bottom: 2em; }
+    .result { background: #f9f9f9; border: 1px solid #eee; padding: 0.5em; margin-top: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>CrystalChat Debug Client</h1>
+  <div class="section">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input name="username" placeholder="Username" required minlength="3" maxlength="16"><br>
+      <input name="password" type="password" placeholder="Password" required minlength="6" maxlength="24"><br>
+      <label><input type="checkbox" name="ELUA" value="true" required> I accept the ELUA</label><br>
+      <button type="submit">Register</button>
+    </form>
+    <div id="registerResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input name="username" placeholder="Username" required><br>
+      <input name="password" type="password" placeholder="Password" required><br>
+      <button type="submit">Get Token</button>
+    </form>
+    <div id="loginResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>Who Am I</h2>
+    <form id="whoamiForm">
+      <input name="token" placeholder="Token" required><br>
+      <button type="submit">Who Am I</button>
+    </form>
+    <div id="whoamiResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>Get All Users (Admin)</h2>
+    <form id="usersForm">
+      <input name="token" placeholder="Admin Token" required><br>
+      <button type="submit">Get Users</button>
+    </form>
+    <div id="usersResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>Get All Chats (Admin)</h2>
+    <form id="chatsForm">
+      <input name="token" placeholder="Admin Token" required><br>
+      <button type="submit">Get Chats</button>
+    </form>
+    <div id="chatsResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>My Chats</h2>
+    <form id="mychatsForm">
+      <input name="token" placeholder="User Token" required><br>
+      <button type="submit">Get My Chats</button>
+    </form>
+    <div id="mychatsResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>Create Group Chat</h2>
+    <form id="newGroupChatForm">
+      <input name="token" placeholder="User Token" required><br>
+      <input name="chatname" placeholder="Group Name" required><br>
+      <input name="description" placeholder="Description"><br>
+      <button type="submit">Create Group Chat</button>
+    </form>
+    <div id="newGroupChatResult" class="result"></div>
+  </div>
+  <div class="section">
+    <h2>Create DM Chat</h2>
+    <form id="newDMChatForm">
+      <input name="token" placeholder="User Token" required><br>
+      <input name="isdm" placeholder="Other User ID (number)" required type="number"><br>
+      <button type="submit">Create DM Chat</button>
+    </form>
+    <div id="newDMChatResult" class="result"></div>
+  </div>
+  <script>
+    function post(url, data) {
+      return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(r => r.json());
+    }
+    function get(url, token) {
+      return fetch(url, {
+        method: 'GET',
+        headers: token ? { 'Authorization': token } : {}
+      }).then(r => r.json());
+    }
+    document.getElementById('registerForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      const data = {
+        username: f.username.value,
+        password: f.password.value,
+        ELUA: f.ELUA.checked ? "true" : "false"
+      };
+      document.getElementById('registerResult').textContent = JSON.stringify(await post('/api/register', data), null, 2);
+    };
+    document.getElementById('loginForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      const data = { username: f.username.value, password: f.password.value };
+      document.getElementById('loginResult').textContent = JSON.stringify(await post('/api/gettoken', data), null, 2);
+    };
+    document.getElementById('whoamiForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      const data = { token: f.token.value };
+      document.getElementById('whoamiResult').textContent = JSON.stringify(await post('/api/whoami', data), null, 2);
+    };
+    document.getElementById('usersForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      document.getElementById('usersResult').textContent = JSON.stringify(await get('/api/users', f.token.value), null, 2);
+    };
+    document.getElementById('chatsForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      document.getElementById('chatsResult').textContent = JSON.stringify(await get('/api/chats', f.token.value), null, 2);
+    };
+    document.getElementById('mychatsForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      document.getElementById('mychatsResult').textContent = JSON.stringify(await get('/api/mychats', f.token.value), null, 2);
+    };
+    document.getElementById('newGroupChatForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      const data = {
+        token: f.token.value,
+        chatname: f.chatname.value,
+        description: f.description.value
+      };
+      document.getElementById('newGroupChatResult').textContent = JSON.stringify(await post('/api/newchat', data), null, 2);
+    };
+    document.getElementById('newDMChatForm').onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      const data = {
+        token: f.token.value,
+        isdm: Number(f.isdm.value)
+      };
+      document.getElementById('newDMChatResult').textContent = JSON.stringify(await post('/api/newchat', data), null, 2);
+    };
+  </script>
+</body>
+</html>

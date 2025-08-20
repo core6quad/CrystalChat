@@ -50,7 +50,12 @@ module.exports = function(app, db) {
   });
 
   app.post('/api/register', (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, ELUA } = req.body;
+
+    // Require ELUA to be true
+    if (ELUA !== "true") {
+        return res.status(400).json({ error: 'ELUA acceptance required' });
+    }
 
     if (
       typeof username !== 'string' ||
