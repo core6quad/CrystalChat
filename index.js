@@ -27,6 +27,32 @@ app.get('/api/version', (req, res) => {
   res.send(version)
 })
 
+// Serialize user row to object
+function serializeUser(row) {
+  return {
+    username: row.username,
+    password: row.password,
+    registrationTime: row.registration_time,
+    token: row.token,
+    IsBanned: !!row.is_banned,
+    IsAdmin: !!row.is_admin,
+    AvatarID: row.avatar_id,
+    LastOnline: row.last_online
+  };
+}
+
+// Endpoint to get all users serialized
+app.get('/api/users', (req, res) => {
+  db.all('SELECT username, password, registration_time, token, is_banned, is_admin, avatar_id, last_online FROM user', [], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: 'Database error' });
+      return;
+    }
+    const users = rows.map(serializeUser);
+    res.json(users);
+  });
+});
+
 app.listen(port, () => {
   console.log(`Crystalchat Server listening on port ${port}`)
 })
