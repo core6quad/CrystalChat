@@ -14,8 +14,30 @@ module.exports = function(app, db) {
     };
   }
 
-  // Endpoint to get all users serialized
-  app.get('/api/users', (req, res) => {
+  // Middleware to check admin token
+  function requireAdminToken(req, res, next) {
+    const token = req.headers['authorization'] || req.body.token;
+    if (!token) {
+      return res.status(401).json({ error: 'Token required' });
+    }
+    db.get(
+      'SELECT is_admin FROM user WHERE token = ?',
+      [token],
+      (err, row) => {
+        if (err) {
+          console.error('DB error in admin auth:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        if (!row || !row.is_admin) {
+          return res.status(403).json({ error: 'Admin privileges required' });
+        }
+        next();
+      }
+    );
+  }
+
+  // Endpoint to get all users serialized (admin only)
+  app.get('/api/users', requireAdminToken, (req, res) => {
     db.all('SELECT username, password, registration_time, token, is_banned, is_admin, avatar_id, last_online FROM user', [], (err, rows) => {
       if (err) {
         console.error('DB error in /api/users:', err);
