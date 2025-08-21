@@ -6,7 +6,7 @@
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/core6quad/CrystalChat)
 
 ## A telegram-like messenger
-tried of NFT **** in telegram? your gov is dumb? let's solve that!
+Tired of freckin NFT in telegram? Is your local government dumb? Let's solve that!
 
 
 
